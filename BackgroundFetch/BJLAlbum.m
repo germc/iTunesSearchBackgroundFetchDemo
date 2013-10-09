@@ -10,4 +10,18 @@
 
 @implementation BJLAlbum
 
+- (id)initWithAlbumDict:(NSDictionary *)albumDict
+{
+    self = [super init];
+    if (self) {
+        _title = albumDict[@"collectionName"];
+        _artist = albumDict[@"artistName"];
+        NSString *albumURLString = albumDict[@"artworkUrl100"];
+        NSURL *albumURL = [NSURL URLWithString:albumURLString];
+        NSData *imageData = [NSData dataWithContentsOfURL:albumURL];
+        _artwork = [UIImage imageWithData:imageData];
+    }
+    return self;
+}
+
 @end

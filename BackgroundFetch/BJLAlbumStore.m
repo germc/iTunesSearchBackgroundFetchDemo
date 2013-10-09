@@ -28,14 +28,11 @@
 
 - (void)fetchAlbumsWithCompletion:(AlbumStoreCompletion)completion
 {
-    NSUInteger randomArtistIndex = arc4random_uniform([self.artistNameList count]);
-    NSString *randomArtistString = self.artistNameList[randomArtistIndex];
-    NSString *artistSearchString = [NSString stringWithFormat:@"https://itunes.apple.com/search?term=%@&media=music&entity=album&country=us&attribute=artistTerm&limit=25", randomArtistString];
-    NSURL *artistSearchURL = [NSURL URLWithString:artistSearchString];
+    NSURL *randomArtistSearchURL = [self randomArtistSearchURL];
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSError *dataError = nil;
-        NSData *rawData = [NSData dataWithContentsOfURL:artistSearchURL options:0 error:&dataError];
+        NSData *rawData = [NSData dataWithContentsOfURL:randomArtistSearchURL options:0 error:&dataError];
         
         if (!dataError) {
             NSError *jsonError = nil;
@@ -46,6 +43,7 @@
                 completion(parsedAlbumsArray, nil);
             } else { // Couldn't parse json
                 NSLog(@"Json Error: %@", [jsonError localizedDescription]);
+                completion(nil, jsonError);
             }
         } else { // Error reading NSData
             NSLog(@"Data Reading Error: %@", [dataError localizedDescription]);
@@ -54,22 +52,23 @@
     });
 }
 
-#pragma mark - Parse Json into Model Objects
+#pragma mark - Helpers
+
+- (NSURL *)randomArtistSearchURL
+{
+    NSUInteger randomArtistIndex = arc4random_uniform([self.artistNameList count]);
+    NSString *randomArtistString = self.artistNameList[randomArtistIndex];
+    NSString *artistSearchString = [NSString stringWithFormat:@"https://itunes.apple.com/search?term=%@&media=music&entity=album&country=us&attribute=artistTerm&limit=25", randomArtistString];
+    
+    return [NSURL URLWithString:artistSearchString];
+}
 
 - (NSArray *)parsedAlbumArrayFromJsonArray:(NSArray *)jsonArray
 {
     NSMutableArray *albumArray = [NSMutableArray arrayWithCapacity:[jsonArray count]];
     
     for (NSDictionary *albumDict in jsonArray) {
-        BJLAlbum *newAlbum = [[BJLAlbum alloc] init];
-        newAlbum.title = albumDict[@"collectionName"];
-        newAlbum.artist = albumDict[@"artistName"];
-        
-        NSString *albumURLString = albumDict[@"artworkUrl100"];
-        NSURL *albumURL = [NSURL URLWithString:albumURLString];
-        NSData *imageData = [NSData dataWithContentsOfURL:albumURL];
-        newAlbum.artwork = [UIImage imageWithData:imageData];
-        
+        BJLAlbum *newAlbum = [[BJLAlbum alloc] initWithAlbumDict:albumDict];
         [albumArray addObject:newAlbum];
     }
     

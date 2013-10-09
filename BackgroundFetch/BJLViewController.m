@@ -66,11 +66,15 @@
     __weak typeof(self)weakSelf = self;
     [self.albumStore fetchAlbumsWithCompletion:^(NSArray *albums, NSError *error) {
         if (!error) {
-            __strong typeof(self)strongSelf = weakSelf;
-            strongSelf.albums = albums;
-            [strongSelf.collectionView reloadData];
-            NSLog(@"Background fetch complete. Updating UI.");
-            completion(YES);
+            if (albums && weakSelf) {
+                __strong typeof(self)strongSelf = weakSelf;
+                strongSelf.albums = albums;
+                [strongSelf.collectionView reloadData];
+                NSLog(@"Background fetch complete. Updating UI.");
+                completion(YES);
+            } else {
+                completion(NO);
+            }
         } else {
             completion(NO);
         }

@@ -14,4 +14,7 @@
 @property (copy, nonatomic) NSString *artist;
 @property (strong, nonatomic) UIImage *artwork;
 
+// Designated Initializer
+- (id)initWithAlbumDict:(NSDictionary *)albumDict;
+
 @end
